@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Links</title>
@@ -74,7 +74,6 @@
 </head>
 <body>
 
-<!-- 顶部语言切换 -->
 <div class="top-bar">
     <div class="lang-switch">
         <button data-lang="en">EN</button>
@@ -83,63 +82,83 @@
     </div>
 </div>
 
-<!-- 内容 -->
 <div id="content">Loading...</div>
 
 <script>
-    const langMap = {
-        en: 'links.en.md',
-        es: 'links.es.md',
-        zh: 'links.zh.md'
-    };
+/* =========================
+   Markdown 配置
+========================= */
+const renderer = new marked.Renderer();
+renderer.link = function (href, title, text) {
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+};
+marked.use({ renderer });
 
-    // Markdown 链接新标签页打开
-    const renderer = new marked.Renderer();
-    renderer.link = function (href, title, text) {
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-    };
-    marked.use({ renderer });
+/* =========================
+   语言配置
+========================= */
+const langFiles = {
+    en: 'links.en.md',
+    es: 'links.es.md',
+    zh: 'links.zh.md'
+};
 
-    function getLangFromURL() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('lang');
-    }
+/* =========================
+   工具函数
+========================= */
+function getLangFromURL() {
+    return new URLSearchParams(location.search).get('lang');
+}
 
-    function setActiveButton(lang) {
-        document.querySelectorAll('.lang-switch button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.lang === lang);
-        });
-    }
+function getLangFromBrowser() {
+    const lang = navigator.language.toLowerCase();
+    if (lang.startsWith('zh')) return 'zh';
+    if (lang.startsWith('es')) return 'es';
+    return 'en';
+}
 
-    function loadMarkdown(lang) {
-        const file = langMap[lang] || langMap.en;
-        setActiveButton(lang);
-
-        fetch(file)
-            .then(res => {
-                if (!res.ok) throw new Error('Load failed');
-                return res.text();
-            })
-            .then(md => {
-                document.getElementById('content').innerHTML = marked.parse(md);
-                history.replaceState(null, '', `?lang=${lang}`);
-            })
-            .catch(() => {
-                document.getElementById('content').innerHTML =
-                    '<p>Failed to load content.</p>';
-            });
-    }
-
-    // 绑定点击
+function setActiveButton(lang) {
     document.querySelectorAll('.lang-switch button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            loadMarkdown(btn.dataset.lang);
-        });
+        btn.classList.toggle('active', btn.dataset.lang === lang);
     });
+}
 
-    // 默认语言
-    const defaultLang = getLangFromURL() || 'en';
-    loadMarkdown(defaultLang);
+function loadMarkdown(lang, updateURL = true) {
+    const file = langFiles[lang] || langFiles.en;
+    setActiveButton(lang);
+
+    fetch(file)
+        .then(r => r.text())
+        .then(md => {
+            document.getElementById('content').innerHTML = marked.parse(md);
+            if (updateURL) {
+                history.replaceState(null, '', `?lang=${lang}`);
+            }
+        })
+        .catch(() => {
+            document.getElementById('content').innerHTML =
+                '<p>Failed to load content.</p>';
+        });
+}
+
+/* =========================
+   语言按钮点击（唯一切换入口）
+========================= */
+document.querySelectorAll('.lang-switch button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        loadMarkdown(btn.dataset.lang);
+    });
+});
+
+/* =========================
+   初始化语言
+========================= */
+const initLang =
+    getLangFromURL() ||
+    getLangFromBrowser() ||
+    'en';
+
+loadMarkdown(initLang, false);
 </script>
 
 </body>
