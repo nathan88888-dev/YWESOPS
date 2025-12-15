@@ -2,36 +2,43 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Markdown 链接页</title>
+    <title>Links</title>
 
-    <!-- Markdown 解析库 -->
+    <!-- Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
             background: #f6f8fa;
             margin: 0;
-            padding: 40px;
+            padding: 32px;
         }
         #content {
-            max-width: 800px;
+            max-width: 860px;
             margin: auto;
-            background: #fff;
+            background: #ffffff;
             padding: 32px;
-            border-radius: 10px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.05);
         }
         h1 {
             border-bottom: 2px solid #eaecef;
             padding-bottom: 10px;
         }
         h2 {
-            margin-top: 28px;
+            margin-top: 32px;
             color: #0969da;
+        }
+        ul {
+            line-height: 1.8;
         }
         a {
             color: #0969da;
             text-decoration: none;
+            font-weight: 500;
         }
         a:hover {
             text-decoration: underline;
@@ -40,30 +47,10 @@
 </head>
 <body>
 
-<div id="content">加载中...</div>
+<div id="content">Loading...</div>
 
 <script>
-    // 让所有链接在新标签页打开
-    marked.setOptions({
-        renderer: new marked.Renderer()
-    });
-
+    // 让 markdown 中的链接全部在新标签页打开
     const renderer = new marked.Renderer();
-    renderer.link = function(href, title, text) {
-        return `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
-    };
-    marked.use({ renderer });
-
-    // 指定 markdown 文件
-    fetch('links.md')
-        .then(res => res.text())
-        .then(md => {
-            document.getElementById('content').innerHTML = marked.parse(md);
-        })
-        .catch(err => {
-            document.getElementById('content').innerText = '加载失败';
-        });
-</script>
-
-</body>
-</html>
+    renderer.link = function (href, title, text) {
+        return `<a href="${href
