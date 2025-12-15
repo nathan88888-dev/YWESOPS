@@ -47,29 +47,16 @@
             box-shadow: 0 8px 24px rgba(0,0,0,.06);
         }
 
-        h1 {
-            border-bottom: 2px solid #eaecef;
-            padding-bottom: 8px;
-        }
-
-        h2 {
-            margin-top: 28px;
-            color: #0969da;
-        }
-
-        ul {
-            line-height: 1.8;
-        }
+        h1 { border-bottom: 2px solid #eaecef; }
+        h2 { margin-top: 28px; color: #0969da; }
+        ul { line-height: 1.8; }
 
         a {
             color: #0969da;
             text-decoration: none;
             font-weight: 500;
         }
-
-        a:hover {
-            text-decoration: underline;
-        }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -85,59 +72,13 @@
 <div id="content">Loading...</div>
 
 <script>
-/* =========================
-   Markdown 配置
-========================= */
-<script>
-const renderer = new marked.Renderer();
-
-renderer.link = function (href, title, text) {
-    // 如果是 md 文件：在当前页面加载
-    if (href.endsWith('.md')) {
-        return `
-        <a href="#" onclick="loadCustomMarkdown('${href}'); return false;">
-            ${text}
-        </a>`;
-    }
-
-    // 其他链接：正常新标签页打开
-    return `
-        <a href="${href}"
-           target="_blank"
-           rel="noopener noreferrer">
-           ${text}
-        </a>`;
-};
-
-marked.use({ renderer });
-
-/* 加载任意 md 文件（不切换语言） */
-function loadCustomMarkdown(file) {
-    fetch(file)
-        .then(res => res.text())
-        .then(md => {
-            document.getElementById('content').innerHTML = marked.parse(md);
-        })
-        .catch(() => {
-            alert('无法加载 Markdown 文件');
-        });
-}
-</script>
-
-marked.use({ renderer });
-
-/* =========================
-   语言配置
-========================= */
+/* ========== 语言配置 ========== */
 const langFiles = {
     en: 'links.en.md',
     es: 'links.es.md',
     zh: 'links.zh.md'
 };
 
-/* =========================
-   工具函数
-========================= */
 function getLangFromURL() {
     return new URLSearchParams(location.search).get('lang');
 }
@@ -155,6 +96,7 @@ function setActiveButton(lang) {
     });
 }
 
+/* ========== 核心渲染 ========== */
 function loadMarkdown(lang, updateURL = true) {
     const file = langFiles[lang] || langFiles.en;
     setActiveButton(lang);
@@ -162,7 +104,19 @@ function loadMarkdown(lang, updateURL = true) {
     fetch(file)
         .then(r => r.text())
         .then(md => {
-            document.getElementById('content').innerHTML = marked.parse(md);
+            const html = marked.parse(md);
+            const container = document.getElementById('content');
+            container.innerHTML = html;
+
+            // ✅ 统一处理所有链接
+            container.querySelectorAll('a').forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && href.startsWith('http')) {
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                }
+            });
+
             if (updateURL) {
                 history.replaceState(null, '', `?lang=${lang}`);
             }
@@ -173,18 +127,14 @@ function loadMarkdown(lang, updateURL = true) {
         });
 }
 
-/* =========================
-   语言按钮点击（唯一切换入口）
-========================= */
+/* ========== 语言切换按钮 ========== */
 document.querySelectorAll('.lang-switch button').forEach(btn => {
     btn.addEventListener('click', () => {
         loadMarkdown(btn.dataset.lang);
     });
 });
 
-/* =========================
-   初始化语言
-========================= */
+/* ========== 初始化 ========== */
 const initLang =
     getLangFromURL() ||
     getLangFromBrowser() ||
