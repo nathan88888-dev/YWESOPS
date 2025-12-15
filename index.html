@@ -4,42 +4,69 @@
     <meta charset="UTF-8">
     <title>Links</title>
 
-    <!-- Marked.js -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
             background: #f6f8fa;
             margin: 0;
-            padding: 32px;
+            padding: 24px;
         }
+
+        .top-bar {
+            max-width: 900px;
+            margin: 0 auto 16px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .lang-switch button {
+            margin-left: 8px;
+            padding: 6px 12px;
+            border: 1px solid #d0d7de;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .lang-switch button.active {
+            background: #0969da;
+            color: white;
+            border-color: #0969da;
+        }
+
         #content {
-            max-width: 860px;
+            max-width: 900px;
             margin: auto;
-            background: #ffffff;
+            background: white;
             padding: 32px;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.05);
+            box-shadow: 0 8px 24px rgba(0,0,0,.06);
         }
+
         h1 {
             border-bottom: 2px solid #eaecef;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
+
         h2 {
-            margin-top: 32px;
+            margin-top: 28px;
             color: #0969da;
         }
+
         ul {
             line-height: 1.8;
         }
+
         a {
             color: #0969da;
             text-decoration: none;
             font-weight: 500;
         }
+
         a:hover {
             text-decoration: underline;
         }
@@ -47,10 +74,73 @@
 </head>
 <body>
 
+<!-- 顶部语言切换 -->
+<div class="top-bar">
+    <div class="lang-switch">
+        <button data-lang="en">EN</button>
+        <button data-lang="es">ES</button>
+        <button data-lang="zh">中文</button>
+    </div>
+</div>
+
+<!-- 内容 -->
 <div id="content">Loading...</div>
 
 <script>
-    // 让 markdown 中的链接全部在新标签页打开
+    const langMap = {
+        en: 'links.en.md',
+        es: 'links.es.md',
+        zh: 'links.zh.md'
+    };
+
+    // Markdown 链接新标签页打开
     const renderer = new marked.Renderer();
     renderer.link = function (href, title, text) {
-        return `<a href="${href
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    };
+    marked.use({ renderer });
+
+    function getLangFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('lang');
+    }
+
+    function setActiveButton(lang) {
+        document.querySelectorAll('.lang-switch button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+    }
+
+    function loadMarkdown(lang) {
+        const file = langMap[lang] || langMap.en;
+        setActiveButton(lang);
+
+        fetch(file)
+            .then(res => {
+                if (!res.ok) throw new Error('Load failed');
+                return res.text();
+            })
+            .then(md => {
+                document.getElementById('content').innerHTML = marked.parse(md);
+                history.replaceState(null, '', `?lang=${lang}`);
+            })
+            .catch(() => {
+                document.getElementById('content').innerHTML =
+                    '<p>Failed to load content.</p>';
+            });
+    }
+
+    // 绑定点击
+    document.querySelectorAll('.lang-switch button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            loadMarkdown(btn.dataset.lang);
+        });
+    });
+
+    // 默认语言
+    const defaultLang = getLangFromURL() || 'en';
+    loadMarkdown(defaultLang);
+</script>
+
+</body>
+</html>
