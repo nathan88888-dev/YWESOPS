@@ -1,8 +1,8 @@
-# 常用入口
+# YWE常用SOP
 
-## 开发
-- [GitHub](https://github.com)
-- [MDN Web Docs](https://developer.mozilla.org)
+## 供应商门户
+- [货量预测](https://yw-helper.yanwenexpress.com/index.html?lang=zh)
+- [劳务模块](https://alidocs.dingtalk.com/i/nodes/KGZLxjv9VG33Qod0HxgQXYExV6EDybno?utm_scene=person_space)
 
-## 学习
-- [Java 官方文档](https://docs.oracle.com/javase/)
+## ADP操作
+- [客户自提商品流程](https://alidocs.dingtalk.com/i/nodes/20eMKjyp81RRYmOLs7L99MlPWxAZB1Gv?utm_scene=person_space)
