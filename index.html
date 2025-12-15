@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown 链接页</title>
+
+    <!-- Markdown 解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
+            background: #f6f8fa;
+            margin: 0;
+            padding: 40px;
+        }
+        #content {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 10px;
+        }
+        h1 {
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 10px;
+        }
+        h2 {
+            margin-top: 28px;
+            color: #0969da;
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content">加载中...</div>
+
+<script>
+    // 让所有链接在新标签页打开
+    marked.setOptions({
+        renderer: new marked.Renderer()
+    });
+
+    const renderer = new marked.Renderer();
+    renderer.link = function(href, title, text) {
+        return `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
+    };
+    marked.use({ renderer });
+
+    // 指定 markdown 文件
+    fetch('links.md')
+        .then(res => res.text())
+        .then(md => {
+            document.getElementById('content').innerHTML = marked.parse(md);
+        })
+        .catch(err => {
+            document.getElementById('content').innerText = '加载失败';
+        });
+</script>
+
+</body>
+</html>
