@@ -88,10 +88,42 @@
 /* =========================
    Markdown 配置
 ========================= */
+<script>
 const renderer = new marked.Renderer();
+
 renderer.link = function (href, title, text) {
-    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    // 如果是 md 文件：在当前页面加载
+    if (href.endsWith('.md')) {
+        return `
+        <a href="#" onclick="loadCustomMarkdown('${href}'); return false;">
+            ${text}
+        </a>`;
+    }
+
+    // 其他链接：正常新标签页打开
+    return `
+        <a href="${href}"
+           target="_blank"
+           rel="noopener noreferrer">
+           ${text}
+        </a>`;
 };
+
+marked.use({ renderer });
+
+/* 加载任意 md 文件（不切换语言） */
+function loadCustomMarkdown(file) {
+    fetch(file)
+        .then(res => res.text())
+        .then(md => {
+            document.getElementById('content').innerHTML = marked.parse(md);
+        })
+        .catch(() => {
+            alert('无法加载 Markdown 文件');
+        });
+}
+</script>
+
 marked.use({ renderer });
 
 /* =========================
