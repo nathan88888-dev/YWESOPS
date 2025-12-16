@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Links</title>
-
+    <title>Markdown Docs</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -14,133 +14,81 @@
             margin: 0;
             padding: 24px;
         }
-
-        .top-bar {
-            max-width: 900px;
-            margin: 0 auto 16px;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .lang-switch button {
-            margin-left: 8px;
-            padding: 6px 12px;
-            border: 1px solid #d0d7de;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .lang-switch button.active {
-            background: #0969da;
-            color: white;
-            border-color: #0969da;
-        }
-
         #content {
-            max-width: 900px;
+            max-width: 980px;
             margin: auto;
             background: white;
             padding: 32px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,.06);
         }
-
         h1 { border-bottom: 2px solid #eaecef; }
         h2 { margin-top: 28px; color: #0969da; }
-        ul { line-height: 1.8; }
-
+        h5 { margin-top: 18px; }
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 12px 0;
+        }
         a {
             color: #0969da;
-            text-decoration: none;
             font-weight: 500;
+            text-decoration: none;
         }
         a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div class="lang-switch">
-        <button data-lang="en">EN</button>
-        <button data-lang="es">ES</button>
-        <button data-lang="zh">中文</button>
-    </div>
-</div>
-
 <div id="content">Loading...</div>
 
 <script>
-/* ========== 语言配置 ========== */
-const langFiles = {
-    en: 'links.en.md',
-    es: 'links.es.md',
-    zh: 'links.zh.md'
-};
-
-function getLangFromURL() {
-    return new URLSearchParams(location.search).get('lang');
+/* ========= 获取 md 文件 ========= */
+function getFileFromURL() {
+    return new URLSearchParams(location.search).get('file');
 }
 
-function getLangFromBrowser() {
-    const lang = navigator.language.toLowerCase();
-    if (lang.startsWith('zh')) return 'zh';
-    if (lang.startsWith('es')) return 'es';
-    return 'en';
-}
-
-function setActiveButton(lang) {
-    document.querySelectorAll('.lang-switch button').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lang === lang);
-    });
-}
-
-/* ========== 核心渲染 ========== */
-function loadMarkdown(lang, updateURL = true) {
-    const file = langFiles[lang] || langFiles.en;
-    setActiveButton(lang);
-
+/* ========= 渲染 Markdown ========= */
+function renderMarkdown(file) {
     fetch(file)
-        .then(r => r.text())
+        .then(r => {
+            if (!r.ok) throw new Error();
+            return r.text();
+        })
         .then(md => {
             const html = marked.parse(md);
             const container = document.getElementById('content');
             container.innerHTML = html;
-
-            // ✅ 统一处理所有链接
-            container.querySelectorAll('a').forEach(a => {
-                const href = a.getAttribute('href');
-                if (href && href.startsWith('http')) {
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                }
-            });
-
-            if (updateURL) {
-                history.replaceState(null, '', `?lang=${lang}`);
-            }
+            processLinks(container);
         })
         .catch(() => {
             document.getElementById('content').innerHTML =
-                '<p>Failed to load content.</p>';
+                '<p>Failed to load markdown file.</p>';
         });
 }
 
-/* ========== 语言切换按钮 ========== */
-document.querySelectorAll('.lang-switch button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        loadMarkdown(btn.dataset.lang);
+/* ========= 关键：统一处理所有链接 ========= */
+function processLinks(container) {
+    container.querySelectorAll('a').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href) return;
+
+        // 👉 如果是 md 文件：新标签打开 index.html 渲染
+        if (href.endsWith('.md')) {
+            a.href = `index.html?file=${href}`;
+            a.target = '_blank';
+        }
+        // 👉 普通网页：新标签
+        else if (href.startsWith('http')) {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+        }
     });
-});
+}
 
-/* ========== 初始化 ========== */
-const initLang =
-    getLangFromURL() ||
-    getLangFromBrowser() ||
-    'en';
-
-loadMarkdown(initLang, false);
+/* ========= 初始化 ========= */
+const mdFile = getFileFromURL() || 'md/links.zh.md';
+renderMarkdown(mdFile);
 </script>
 
 </body>
