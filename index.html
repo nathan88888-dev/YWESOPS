@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Markdown Viewer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Markdown parser -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -14,6 +13,29 @@
             background: #f6f8fa;
             margin: 0;
             padding: 24px;
+        }
+
+        .top-bar {
+            max-width: 980px;
+            margin: 0 auto 16px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .lang-switch button {
+            margin-left: 8px;
+            padding: 6px 12px;
+            border: 1px solid #d0d7de;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .lang-switch button.active {
+            background: #0969da;
+            color: white;
+            border-color: #0969da;
         }
 
         #content {
@@ -25,23 +47,10 @@
             box-shadow: 0 8px 24px rgba(0,0,0,.06);
         }
 
-        h1 {
-            border-bottom: 2px solid #eaecef;
-            padding-bottom: 8px;
-        }
-
-        h2 {
-            margin-top: 28px;
-            color: #0969da;
-        }
-
-        h5 {
-            margin-top: 18px;
-        }
-
-        ul, ol {
-            line-height: 1.8;
-        }
+        h1 { border-bottom: 2px solid #eaecef; }
+        h2 { margin-top: 28px; color: #0969da; }
+        h5 { margin-top: 18px; }
+        ul, ol { line-height: 1.8; }
 
         img {
             max-width: 100%;
@@ -51,84 +60,101 @@
 
         a {
             color: #0969da;
-            font-weight: 500;
             text-decoration: none;
+            font-weight: 500;
         }
 
-        a:hover {
-            text-decoration: underline;
-        }
+        a:hover { text-decoration: underline; }
 
         code {
             background: #f6f8fa;
             padding: 2px 6px;
             border-radius: 4px;
         }
-
-        .error {
-            color: #cf222e;
-        }
     </style>
 </head>
 <body>
 
+<div class="top-bar">
+    <div class="lang-switch">
+        <button data-lang="en">EN</button>
+        <button data-lang="es">ES</button>
+        <button data-lang="zh">中文</button>
+    </div>
+</div>
+
 <div id="content">Loading…</div>
 
 <script>
-/* ===============================
-   配置
+/* ==============================
+   语言配置
 ================================ */
-const DEFAULT_MD = 'md/links.zh.md';
+const langFiles = {
+    en: 'links.en.md',
+    es: 'links.es.md',
+    zh: 'links.zh.md'
+};
 
-/* ===============================
-   工具函数
+/* ==============================
+   URL 解析
 ================================ */
-function getMdFromURL() {
-    return new URLSearchParams(window.location.search).get('file');
+function getQuery(name) {
+    return new URLSearchParams(location.search).get(name);
 }
 
-/* ===============================
-   渲染 Markdown
+/* ==============================
+   语言识别
 ================================ */
-function renderMarkdown(file) {
-    const container = document.getElementById('content');
-    container.innerHTML = `<p>Loading: <code>${file}</code></p>`;
+function getBrowserLang() {
+    const lang = navigator.language.toLowerCase();
+    if (lang.startsWith('zh')) return 'zh';
+    if (lang.startsWith('es')) return 'es';
+    return 'en';
+}
 
+function setActiveButton(lang) {
+    document.querySelectorAll('.lang-switch button')
+        .forEach(btn =>
+            btn.classList.toggle('active', btn.dataset.lang === lang)
+        );
+}
+
+/* ==============================
+   Markdown 渲染
+================================ */
+function renderMarkdown(file, updateURL = true) {
     fetch(file)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            return res.text();
+        .then(r => {
+            if (!r.ok) throw new Error(r.status);
+            return r.text();
         })
         .then(md => {
+            const container = document.getElementById('content');
             container.innerHTML = marked.parse(md);
+
             processLinks(container);
+
+            if (updateURL) {
+                history.replaceState(null, '', `?file=${file}`);
+            }
         })
-        .catch(err => {
-            container.innerHTML = `
-                <h3 class="error">Failed to load markdown file</h3>
-                <p><strong>Path:</strong> <code>${file}</code></p>
-                <p><strong>Error:</strong> ${err.message}</p>
-                <p>请检查：</p>
-                <ul>
-                    <li>md 文件是否已提交到 GitHub</li>
-                    <li>路径和大小写是否完全一致</li>
-                    <li>是否在 GitHub Pages 的根目录下</li>
-                </ul>
-            `;
+        .catch(() => {
+            document.getElementById('content').innerHTML =
+                `<p style="color:#cf222e">
+                    Failed to load markdown: <code>${file}</code>
+                 </p>`;
         });
 }
 
-/* ===============================
-   统一处理所有链接
+/* ==============================
+   链接统一处理
 ================================ */
 function processLinks(container) {
     container.querySelectorAll('a').forEach(a => {
         const href = a.getAttribute('href');
         if (!href) return;
 
-        // Markdown → 新标签 + index.html 渲染
+        // Markdown 文件 → 新标签渲染
         if (href.endsWith('.md')) {
             a.href = `index.html?file=${href}`;
             a.target = '_blank';
@@ -141,11 +167,35 @@ function processLinks(container) {
     });
 }
 
-/* ===============================
-   初始化
+/* ==============================
+   语言切换
 ================================ */
-const mdFile = getMdFromURL() || DEFAULT_MD;
-renderMarkdown(mdFile);
+document.querySelectorAll('.lang-switch button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const lang = btn.dataset.lang;
+        setActiveButton(lang);
+        renderMarkdown(langFiles[lang]);
+        history.replaceState(null, '', `?lang=${lang}`);
+    });
+});
+
+/* ==============================
+   初始化入口
+================================ */
+(function init() {
+    const file = getQuery('file');
+    const lang = getQuery('lang') || getBrowserLang();
+
+    if (file) {
+        // 文件模式（优先级最高）
+        document.querySelector('.top-bar').style.display = 'none';
+        renderMarkdown(file, false);
+    } else {
+        // 语言模式
+        setActiveButton(lang);
+        renderMarkdown(langFiles[lang], false);
+    }
+})();
 </script>
 
 </body>
