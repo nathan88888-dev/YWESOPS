@@ -5,4 +5,4 @@
 - [劳务模块](https://alidocs.dingtalk.com/i/nodes/KGZLxjv9VG33Qod0HxgQXYExV6EDybno?utm_scene=person_space)
 
 ## ADP操作
-- [客户自提商品流程](https://alidocs.dingtalk.com/i/nodes/20eMKjyp81RRYmOLs7L99MlPWxAZB1Gv?utm_scene=person_space)
+- [客户自提商品流程](ADP/selfPickUp.zh.md)
