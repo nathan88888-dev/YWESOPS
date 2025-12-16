@@ -43,29 +43,41 @@
 <div id="content">Loading...</div>
 
 <script>
-/* ========= 获取 md 文件 ========= */
 function getFileFromURL() {
     return new URLSearchParams(location.search).get('file');
 }
 
-/* ========= 渲染 Markdown ========= */
 function renderMarkdown(file) {
+    const container = document.getElementById('content');
+    container.innerHTML = `<p>Loading: <code>${file}</code></p>`;
+
     fetch(file)
         .then(r => {
-            if (!r.ok) throw new Error();
+            if (!r.ok) {
+                throw new Error(`HTTP ${r.status}`);
+            }
             return r.text();
         })
         .then(md => {
-            const html = marked.parse(md);
-            const container = document.getElementById('content');
-            container.innerHTML = html;
-            processLinks(container);
+            container.innerHTML = marked.parse(md);
         })
-        .catch(() => {
-            document.getElementById('content').innerHTML =
-                '<p>Failed to load markdown file.</p>';
+        .catch(err => {
+            container.innerHTML = `
+                <h3>Failed to load markdown file</h3>
+                <p><strong>Path:</strong> ${file}</p>
+                <p><strong>Error:</strong> ${err.message}</p>
+                <p>请检查：</p>
+                <ul>
+                    <li>文件是否存在于 GitHub 仓库</li>
+                    <li>路径和大小写是否完全一致</li>
+                    <li>是否在 GitHub Pages 根目录下</li>
+                </ul>
+            `;
         });
 }
+
+const mdFile = getFileFromURL() || 'md/links.zh.md';
+renderMarkdown(mdFile);
 
 /* ========= 关键：统一处理所有链接 ========= */
 function processLinks(container) {
