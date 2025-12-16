@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Markdown Docs</title>
+    <title>Markdown Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Markdown parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -14,83 +15,125 @@
             margin: 0;
             padding: 24px;
         }
+
         #content {
             max-width: 980px;
             margin: auto;
-            background: white;
+            background: #ffffff;
             padding: 32px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,.06);
         }
-        h1 { border-bottom: 2px solid #eaecef; }
-        h2 { margin-top: 28px; color: #0969da; }
-        h5 { margin-top: 18px; }
+
+        h1 {
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 8px;
+        }
+
+        h2 {
+            margin-top: 28px;
+            color: #0969da;
+        }
+
+        h5 {
+            margin-top: 18px;
+        }
+
+        ul, ol {
+            line-height: 1.8;
+        }
+
         img {
             max-width: 100%;
             display: block;
             margin: 12px 0;
         }
+
         a {
             color: #0969da;
             font-weight: 500;
             text-decoration: none;
         }
-        a:hover { text-decoration: underline; }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .error {
+            color: #cf222e;
+        }
     </style>
 </head>
 <body>
 
-<div id="content">Loading...</div>
+<div id="content">Loading…</div>
 
 <script>
-function getFileFromURL() {
-    return new URLSearchParams(location.search).get('file');
+/* ===============================
+   配置
+================================ */
+const DEFAULT_MD = 'md/links.zh.md';
+
+/* ===============================
+   工具函数
+================================ */
+function getMdFromURL() {
+    return new URLSearchParams(window.location.search).get('file');
 }
 
+/* ===============================
+   渲染 Markdown
+================================ */
 function renderMarkdown(file) {
     const container = document.getElementById('content');
     container.innerHTML = `<p>Loading: <code>${file}</code></p>`;
 
     fetch(file)
-        .then(r => {
-            if (!r.ok) {
-                throw new Error(`HTTP ${r.status}`);
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
             }
-            return r.text();
+            return res.text();
         })
         .then(md => {
             container.innerHTML = marked.parse(md);
+            processLinks(container);
         })
         .catch(err => {
             container.innerHTML = `
-                <h3>Failed to load markdown file</h3>
-                <p><strong>Path:</strong> ${file}</p>
+                <h3 class="error">Failed to load markdown file</h3>
+                <p><strong>Path:</strong> <code>${file}</code></p>
                 <p><strong>Error:</strong> ${err.message}</p>
                 <p>请检查：</p>
                 <ul>
-                    <li>文件是否存在于 GitHub 仓库</li>
+                    <li>md 文件是否已提交到 GitHub</li>
                     <li>路径和大小写是否完全一致</li>
-                    <li>是否在 GitHub Pages 根目录下</li>
+                    <li>是否在 GitHub Pages 的根目录下</li>
                 </ul>
             `;
         });
 }
 
-const mdFile = getFileFromURL() || 'md/links.zh.md';
-renderMarkdown(mdFile);
-
-/* ========= 关键：统一处理所有链接 ========= */
+/* ===============================
+   统一处理所有链接
+================================ */
 function processLinks(container) {
     container.querySelectorAll('a').forEach(a => {
         const href = a.getAttribute('href');
         if (!href) return;
 
-        // 👉 如果是 md 文件：新标签打开 index.html 渲染
+        // Markdown → 新标签 + index.html 渲染
         if (href.endsWith('.md')) {
             a.href = `index.html?file=${href}`;
             a.target = '_blank';
         }
-        // 👉 普通网页：新标签
+        // 普通网页 → 新标签
         else if (href.startsWith('http')) {
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
@@ -98,8 +141,10 @@ function processLinks(container) {
     });
 }
 
-/* ========= 初始化 ========= */
-const mdFile = getFileFromURL() || 'md/links.zh.md';
+/* ===============================
+   初始化
+================================ */
+const mdFile = getMdFromURL() || DEFAULT_MD;
 renderMarkdown(mdFile);
 </script>
 
