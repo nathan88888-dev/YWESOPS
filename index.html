@@ -59,18 +59,21 @@ function getMarkdownFile() {
 function renderMarkdown(mdFile) {
     fetch(mdFile)
         .then(r => {
-            if (!r.ok) throw new Error('Failed to load');
+            if (!r.ok) {
+                throw new Error(`HTTP ${r.status} : ${mdFile}`);
+            }
             return r.text();
         })
         .then(md => {
-            const html = marked.parse(md);
-            const container = document.getElementById('content');
-            container.innerHTML = html;
-            processLinks(container);
+            document.getElementById('content').innerHTML = marked.parse(md);
         })
-        .catch(() => {
+        .catch(err => {
             document.getElementById('content').innerHTML =
-                '<p>Failed to load markdown.</p>';
+                `<pre style="color:red">
+Failed to load markdown
+${err.message}
+Path: ${mdFile}
+</pre>`;
         });
 }
 
